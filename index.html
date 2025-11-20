@@ -158,15 +158,35 @@
                   :key="item.cartId"
                 >
                   <div class="cart-item-content">
-                    <div class="cart-item-icon"><i :class="item.icon"></i></div>
+                    <!-- Icon -->
+                    <div class="cart-item-icon">
+                      <i :class="item.icon"></i>
+                    </div>
+
+                    <!-- Details -->
                     <div class="cart-item-details">
                       <h4>{{ item.topic }}</h4>
                       <p class="cart-item-location">
                         <i class="fas fa-map-marker-alt"></i> {{ item.location
                         }}
                       </p>
-                      <p class="cart-item-price">£{{ item.price }}</p>
+                      <p class="cart-item-price">
+                        £{{ item.price * item.quantity }}
+                      </p>
+
+                      <!-- Quantity controls -->
+                      <div class="cart-quantity-controls">
+                        <button class="qty-btn" @click="decreaseQty(index)">
+                          −
+                        </button>
+                        <span class="qty-number">{{ item.quantity }}</span>
+                        <button class="qty-btn" @click="increaseQty(index)">
+                          +
+                        </button>
+                      </div>
                     </div>
+
+                    <!-- Remove button -->
                     <button class="remove-btn" @click="removeFromCart(index)">
                       <i class="fas fa-trash"></i> Remove
                     </button>
@@ -364,15 +384,31 @@
           toggleOrder() {
             this.ascending = !this.ascending;
           },
-          addToCart(lesson) {
-            if (lesson.space > 0) {
-              const originalLesson = this.lessons.find(
-                (l) => l._id === lesson._id
-              );
-              if (originalLesson) originalLesson.space--;
-              this.cart.push({ ...lesson, cartId: Date.now() + Math.random() });
-            }
-          },
+addToCart(lesson) {
+  if (lesson.space <= 0) return; // no spaces left
+
+  // Check if lesson is already in cart
+  const cartItem = this.cart.find((item) => item._id === lesson._id);
+
+  if (cartItem) {
+    // Increase quantity if there’s still space
+    if (cartItem.quantity < lesson.space + cartItem.quantity) {
+      cartItem.quantity++;
+      lesson.space--; // reduce the original lesson space
+    } else {
+      alert("No more spaces available for this class");
+    }
+  } else {
+    // First time adding to cart
+    this.cart.push({
+      ...lesson,
+      cartId: Date.now() + Math.random(),
+      quantity: 1,
+    });
+    lesson.space--; // reduce the original lesson space
+  }
+},
+
           removeFromCart(index) {
             const lesson = this.cart[index];
             const originalLesson = this.lessons.find(
@@ -426,12 +462,43 @@
             this.showConfirmation = false;
             this.showCart = false;
           },
+  getAvailableSpaces(item) {
+    const originalLesson = this.lessons.find((l) => l._id === item._id);
+    return item.quantity + (originalLesson ? originalLesson.space : 0);
+  },
+  
+  increaseQty(index) {
+    const item = this.cart[index];
+    const originalLesson = this.lessons.find((l) => l._id === item._id);
+
+    if (originalLesson.space > 0) {
+      item.quantity++;
+      originalLesson.space--;
+    }
+  },
+  
+  decreaseQty(index) {
+    const item = this.cart[index];
+    const originalLesson = this.lessons.find((l) => l._id === item._id);
+
+    if (item.quantity > 1) {
+      item.quantity--;
+      if (originalLesson) originalLesson.space++;
+    } else {
+      this.removeFromCart(index);
+    }
+  },
+
         },
 
         computed: {
           totalPrice() {
-            return this.cart.reduce((sum, item) => sum + (item.price || 0), 0);
-          },
+  return this.cart.reduce(
+    (sum, item) => sum + (Number(item.price) * item.quantity),
+    0
+  );
+},
+
           canCheckout() {
             return (
               this.cart.length > 0 &&
