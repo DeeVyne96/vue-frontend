@@ -355,9 +355,11 @@
                 order: this.ascending ? "asc" : "desc",
               });
 
-              const res = await fetch(
-                `http://localhost:3000/lessons?${params}`
-              );
+              const res = await fetch('./data/lessons.json'); 
+
+              // const res = await fetch(
+              //   `http://localhost:3000/lessons?${params}`
+              // );
               if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
               const data = await res.json();

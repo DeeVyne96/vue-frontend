@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "1",
+    "topic": "Mathematics",
+    "location": "Room 101",
+    "price": 20,
+    "space": 5,
+    "icon": "fas fa-calculator"
+  },
+  {
+    "_id": "2",
+    "topic": "Science",
+    "location": "Lab 3",
+    "price": 25,
+    "space": 3,
+    "icon": "fas fa-flask"
+  },
+  {
+    "_id": "3",
+    "topic": "Art",
+    "location": "Studio 5",
+    "price": 15,
+    "space": 0,
+    "icon": "fas fa-palette"
+  }
+]
