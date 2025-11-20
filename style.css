@@ -464,6 +464,10 @@ option {
   min-width: 20px;
   text-align: center;
 }
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 
 /* ===== CHECKOUT SECTION ===== */

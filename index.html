@@ -176,11 +176,19 @@
 
                       <!-- Quantity controls -->
                       <div class="cart-quantity-controls">
-                        <button class="qty-btn" @click="decreaseQty(index)">
+                        <button
+                          class="qty-btn"
+                          @click="decreaseQty(index)"
+                          :disabled="item.quantity === 1"
+                        >
                           −
                         </button>
                         <span class="qty-number">{{ item.quantity }}</span>
-                        <button class="qty-btn" @click="increaseQty(index)">
+                        <button
+                          class="qty-btn"
+                          @click="increaseQty(index)"
+                          :disabled="item.quantity >= item.maxQuantity"
+                        >
                           +
                         </button>
                       </div>
@@ -384,39 +392,35 @@
           toggleOrder() {
             this.ascending = !this.ascending;
           },
-addToCart(lesson) {
-  if (lesson.space <= 0) return; // no spaces left
+          addToCart(lesson) {
+            if (lesson.space <= 0) return; // no spaces left
 
-  // Check if lesson is already in cart
-  const cartItem = this.cart.find((item) => item._id === lesson._id);
+            const cartItem = this.cart.find((item) => item._id === lesson._id);
 
-  if (cartItem) {
-    // Increase quantity if there’s still space
-    if (cartItem.quantity < lesson.space + cartItem.quantity) {
-      cartItem.quantity++;
-      lesson.space--; // reduce the original lesson space
-    } else {
-      alert("No more spaces available for this class");
-    }
-  } else {
-    // First time adding to cart
-    this.cart.push({
-      ...lesson,
-      cartId: Date.now() + Math.random(),
-      quantity: 1,
-    });
-    lesson.space--; // reduce the original lesson space
-  }
-},
+            if (cartItem) {
+              if (lesson.space > 0) {
+                cartItem.quantity++;
+                lesson.space--;
+                cartItem.maxQuantity = cartItem.quantity + lesson.space; // update maxQuantity dynamically
+              }
+            } else {
+              this.cart.push({
+                ...lesson,
+                cartId: Date.now() + Math.random(),
+                quantity: 1,
+                maxQuantity: lesson.space + 1, // total available
+              });
+              lesson.space--;
+            }
+          },
 
           removeFromCart(index) {
-            const lesson = this.cart[index];
-            const originalLesson = this.lessons.find(
-              (l) => l._id === lesson._id
-            );
-            if (originalLesson) originalLesson.space++;
+            const item = this.cart[index];
+            const lesson = this.lessons.find((l) => l._id === item._id);
+            if (lesson) lesson.space += item.quantity; // return all spaces
             this.cart.splice(index, 1);
           },
+
           toggleCart() {
             this.showCart = !this.showCart;
             this.showConfirmation = false;
@@ -462,42 +466,45 @@ addToCart(lesson) {
             this.showConfirmation = false;
             this.showCart = false;
           },
-  getAvailableSpaces(item) {
-    const originalLesson = this.lessons.find((l) => l._id === item._id);
-    return item.quantity + (originalLesson ? originalLesson.space : 0);
-  },
-  
-  increaseQty(index) {
-    const item = this.cart[index];
-    const originalLesson = this.lessons.find((l) => l._id === item._id);
+          getAvailableSpaces(item) {
+            const originalLesson = this.lessons.find((l) => l._id === item._id);
+            return item.quantity + (originalLesson ? originalLesson.space : 0);
+          },
 
-    if (originalLesson.space > 0) {
-      item.quantity++;
-      originalLesson.space--;
-    }
-  },
-  
-  decreaseQty(index) {
-    const item = this.cart[index];
-    const originalLesson = this.lessons.find((l) => l._id === item._id);
+          increaseQty(index) {
+            const item = this.cart[index];
+            const lesson = this.lessons.find((l) => l._id === item._id);
 
-    if (item.quantity > 1) {
-      item.quantity--;
-      if (originalLesson) originalLesson.space++;
-    } else {
-      this.removeFromCart(index);
-    }
-  },
+            if (
+              lesson &&
+              lesson.space > 0 &&
+              item.quantity < item.maxQuantity
+            ) {
+              item.quantity++;
+              lesson.space--;
+              item.maxQuantity = item.quantity + lesson.space; // keep maxQuantity accurate
+            }
+          },
 
+          decreaseQty(index) {
+            const item = this.cart[index];
+            const lesson = this.lessons.find((l) => l._id === item._id);
+
+            if (item.quantity > 1) {
+              item.quantity--;
+              if (lesson) lesson.space++;
+              item.maxQuantity = item.quantity + (lesson ? lesson.space : 0); // optional but safe
+            }
+          }
         },
 
         computed: {
           totalPrice() {
-  return this.cart.reduce(
-    (sum, item) => sum + (Number(item.price) * item.quantity),
-    0
-  );
-},
+            return this.cart.reduce(
+              (sum, item) => sum + Number(item.price) * item.quantity,
+              0
+            );
+          },
 
           canCheckout() {
             return (
