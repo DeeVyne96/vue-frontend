@@ -445,7 +445,7 @@
             };
 
             try {
-              const res = await fetch("http://localhost:3000/orders", {
+              const res = await fetch("https://express-backend-zmzd.onrender.com/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(orderData),
